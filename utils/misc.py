@@ -357,9 +357,10 @@ def auto_resume(args: arg_util.Args, pattern='ckpt*.pth') -> Tuple[List[str], in
         return info, ep, it, ckpt['trainer'], ckpt['args']
 
 
-def create_npz_from_sample_folder(sample_folder: str):
+def create_npz_from_sample_folder(sample_folder: str, expected_count: int = 50_000):
     """
     Builds a single .npz file from a folder of .png samples. Refer to DiT.
+    Set expected_count=0 to skip the count check (useful for custom sample counts).
     """
     import os, glob
     import numpy as np
@@ -368,13 +369,14 @@ def create_npz_from_sample_folder(sample_folder: str):
     
     samples = []
     pngs = glob.glob(os.path.join(sample_folder, '*.png')) + glob.glob(os.path.join(sample_folder, '*.PNG'))
-    assert len(pngs) == 50_000, f'{len(pngs)} png files found in {sample_folder}, but expected 50,000'
+    if expected_count > 0:
+        assert len(pngs) == expected_count, f'{len(pngs)} png files found in {sample_folder}, but expected {expected_count}'
     for png in tqdm(pngs, desc='Building .npz file from samples (png only)'):
         with Image.open(png) as sample_pil:
             sample_np = np.asarray(sample_pil).astype(np.uint8)
         samples.append(sample_np)
     samples = np.stack(samples)
-    assert samples.shape == (50_000, samples.shape[1], samples.shape[2], 3)
+    assert samples.shape[-1] == 3, f'expected 3-channel images, got shape {samples.shape}'
     npz_path = f'{sample_folder}.npz'
     np.savez(npz_path, arr_0=samples)
     print(f'Saved .npz file to {npz_path} [shape={samples.shape}].')
