@@ -14,7 +14,10 @@ from models import build_vae_var
 from utils.misc import create_npz_from_sample_folder
 
 
-HF_HOME = 'https://huggingface.co/FoundationVision/var/resolve/main'
+# Respect HF_ENDPOINT env var so users behind GFW can use a mirror like hf-mirror.com.
+# Usage:  export HF_ENDPOINT=https://hf-mirror.com
+_HF_ENDPOINT = os.environ.get('HF_ENDPOINT', 'https://huggingface.co').rstrip('/')
+HF_HOME = f'{_HF_ENDPOINT}/FoundationVision/var/resolve/main'
 
 
 def parse_args():
